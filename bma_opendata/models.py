@@ -56,11 +56,12 @@ class Group(APIModel):
 
     id: str
     name: str
-    title: str
+    title: Optional[str] = None
     description: Optional[str] = None
-    created: datetime
-    is_group: bool
-    state: str
+    created: Optional[datetime] = None
+    is_group: Optional[bool] = None
+    state: Optional[str] = None
+    display_name: Optional[str] = None
 
 
 class Resource(APIModel):

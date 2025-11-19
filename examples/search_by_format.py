@@ -5,7 +5,6 @@ import logging
 
 from bma_opendata import BangkokOpenDataClient, CKANApiError
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -54,9 +53,7 @@ def main() -> None:
             return
 
         for dataset in datasets:
-            logger.info(
-                "%s (%s resources)", dataset.title, len(dataset.resources)
-            )
+            logger.info("%s (%s resources)", dataset.title, len(dataset.resources))
 
 
 if __name__ == "__main__":

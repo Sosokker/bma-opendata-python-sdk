@@ -39,3 +39,10 @@ Run them with your preferred tool, e.g.:
 uv run python -m examples.list_datasets
 uv run python -m examples.search_by_format --query water --format JSON
 ```
+
+## Headers & authentication
+
+The portal occasionally blocks default `python-requests` clients.  
+The SDK now sends a browser-like `User-Agent` automatically; override it with the `BMA_OPENDATA_USER_AGENT`
+environment variable or by passing `headers={"User-Agent": "..."}`.  
+If you have a CKAN API token, either set `BMA_OPENDATA_API_KEY` or pass `api_key=` to the client to authorize requests.

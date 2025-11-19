@@ -4,7 +4,6 @@ import logging
 
 from bma_opendata import BangkokOpenDataClient, CKANApiError
 
-
 logger = logging.getLogger(__name__)
 
 

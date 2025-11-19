@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
@@ -19,6 +20,12 @@ from .models import (
 )
 
 DEFAULT_BASE_URL = "https://data.bangkok.go.th/api/3/action"
+DEFAULT_USER_AGENT = os.getenv(
+    "BMA_OPENDATA_USER_AGENT",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/124.0 Safari/537.36",
+)
 
 
 class CKANApiError(Exception):
@@ -83,11 +90,15 @@ class BangkokOpenDataClient:
         self._owns_session = session is None
         self.timeout = timeout
 
-        self._headers: MutableMapping[str, str] = {}
+        resolved_api_key = api_key or os.getenv("BMA_OPENDATA_API_KEY")
+
+        self._headers: MutableMapping[str, str] = {"User-Agent": DEFAULT_USER_AGENT}
         if headers:
             self._headers.update(headers)
-        if api_key:
-            self._headers.setdefault("X-CKAN-API-Key", api_key)
+        if "User-Agent" not in self._headers:
+            self._headers["User-Agent"] = DEFAULT_USER_AGENT
+        if resolved_api_key:
+            self._headers.setdefault("X-CKAN-API-Key", resolved_api_key)
 
         self._cache_ttl = cache_ttl if cache_ttl and cache_ttl > 0 else None
         self._cache: dict[tuple[str, tuple[tuple[str, str], ...]], _CacheEntry] = {}
