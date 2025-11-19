@@ -1,0 +1,529 @@
+openapi: 3.0.3
+info:
+  title: Bangkok Open‑Data CKAN API
+  description: |
+    This OpenAPI document describes a subset of the CKAN Action API exposed by
+    the Bangkok Open Government Data portal.  CKAN exposes an RPC‑style
+    interface where each function is mapped to a URL of the form
+    `/api/3/action/<function_name>`.  Requests and responses are encoded in
+    JSON.  Each response contains a top‑level object with `help`, `success`
+    and `result` properties.  When `success` is `false`, an `error` object
+    may be returned instead of `result`.
+  version: 1.0.0
+servers:
+  - url: https://data.bangkok.go.th/api/3/action
+    description: Production CKAN API endpoint
+
+tags:
+  - name: Datasets
+    description: Operations related to datasets (packages)
+  - name: Resources
+    description: Operations related to individual data resources
+  - name: Misc
+    description: Miscellaneous or helper operations
+
+paths:
+  /package_list:
+    get:
+      tags:
+        - Datasets
+      summary: List all dataset identifiers
+      description: |
+        Returns a list of all dataset identifiers (names) visible to the caller.
+        Equivalent to `package_list` in CKAN.  This endpoint accepts no
+        parameters.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringListResponse'
+
+  /package_show:
+    get:
+      tags:
+        - Datasets
+      summary: Show a single dataset by name or ID
+      description: |
+        Retrieves the full metadata for a dataset.  At least one of
+        `id` or `name` must be provided.  If both are provided they
+        should identify the same dataset.
+      parameters:
+        - name: id
+          in: query
+          description: UUID of the dataset to return
+          required: false
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: Name (slug) of the dataset to return
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetResponse'
+        '400':
+          description: Missing parameter error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /resource_show:
+    get:
+      tags:
+        - Resources
+      summary: Show metadata for a single resource
+      description: |
+        Returns metadata for a resource.  The resource can be identified
+        by its UUID or alias via the `id` parameter.
+      parameters:
+        - name: id
+          in: query
+          description: UUID or alias of the resource
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+        '400':
+          description: Missing or invalid resource ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /package_search:
+    get:
+      tags:
+        - Datasets
+      summary: Search for datasets by query
+      description: |
+        Searches datasets by a full text query and optional filters.  The
+        search can be refined using CKAN's `fq` syntax for field queries.
+      parameters:
+        - name: q
+          in: query
+          description: Full text search query.  When omitted, all datasets are returned.
+          required: false
+          schema:
+            type: string
+        - name: fq
+          in: query
+          description: |
+            Filter query using Solr/ElasticSearch syntax, e.g. `res_format:CSV`.
+          required: false
+          schema:
+            type: string
+        - name: rows
+          in: query
+          description: Number of rows to return (default 10, maximum 32000)
+          required: false
+          schema:
+            type: integer
+        - name: start
+          in: query
+          description: Offset to start returning results (default 0)
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /help_show:
+    get:
+      tags:
+        - Misc
+      summary: Get help text for a CKAN action
+      description: |
+        Returns the help text for a given CKAN action.  When the `name`
+        parameter is omitted, a list of available actions is returned in
+        the `result` field.  When `name` is provided, the help text for
+        that action is returned.
+      parameters:
+        - name: name
+          in: query
+          description: Name of the action to show help for
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HelpResponse'
+
+components:
+  schemas:
+    # Generic API response wrapper for list of strings
+    StringListResponse:
+      type: object
+      properties:
+        help:
+          type: string
+          description: URL to the API help page for this action
+        success:
+          type: boolean
+          description: Indicates if the action succeeded
+        result:
+          type: array
+          description: List of dataset identifiers
+          items:
+            type: string
+      required:
+        - help
+        - success
+        - result
+
+    # Generic error response format
+    ErrorResponse:
+      type: object
+      properties:
+        help:
+          type: string
+          description: URL to the API help page for the action
+        success:
+          type: boolean
+          description: Always false for error responses
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              description: Human‑readable error message
+            __type:
+              type: string
+              description: Error type (e.g. Authorization Error)
+          required:
+            - message
+      required:
+        - help
+        - success
+        - error
+
+    # Response for dataset metadata
+    DatasetResponse:
+      type: object
+      properties:
+        help:
+          type: string
+        success:
+          type: boolean
+        result:
+          $ref: '#/components/schemas/Dataset'
+      required:
+        - help
+        - success
+        - result
+
+    # Response for resource metadata
+    ResourceResponse:
+      type: object
+      properties:
+        help:
+          type: string
+        success:
+          type: boolean
+        result:
+          $ref: '#/components/schemas/Resource'
+      required:
+        - help
+        - success
+        - result
+
+    # Response for search results
+    SearchResponse:
+      type: object
+      properties:
+        help:
+          type: string
+        success:
+          type: boolean
+        result:
+          type: object
+          properties:
+            count:
+              type: integer
+              description: Total number of matching datasets
+            sort:
+              type: string
+              description: Sort specification used by the search
+            results:
+              type: array
+              description: List of datasets returned by the search
+              items:
+                $ref: '#/components/schemas/Dataset'
+            facets:
+              type: object
+              description: Faceted summary counts (e.g. by organization, group, tag)
+            search_facets:
+              type: object
+              description: Search facet results for each facet field
+          required:
+            - count
+            - results
+      required:
+        - help
+        - success
+        - result
+
+    # Response for help_show
+    HelpResponse:
+      type: object
+      properties:
+        help:
+          type: string
+          description: URL to the help page for help_show
+        success:
+          type: boolean
+        result:
+          type: string
+          description: Human‑readable help text or list of actions
+      required:
+        - help
+        - success
+        - result
+
+    # Dataset object definition based on CKAN's package schema
+    Dataset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Machine‑friendly identifier (slug)
+        title:
+          type: string
+          description: Human‑readable title
+        private:
+          type: boolean
+          description: True if the dataset is private
+        maintainer:
+          type: string
+          description: Name of the person or organisation maintaining the dataset
+        maintainer_email:
+          type: string
+          format: email
+          nullable: true
+        author:
+          type: string
+          nullable: true
+        author_email:
+          type: string
+          format: email
+          nullable: true
+        license_title:
+          type: string
+          description: Human‑readable name of the dataset’s licence
+        license_id:
+          type: string
+          description: Identifier of the dataset’s licence
+        metadata_created:
+          type: string
+          format: date-time
+        metadata_modified:
+          type: string
+          format: date-time
+        organization:
+          $ref: '#/components/schemas/Organization'
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/Group'
+        num_tags:
+          type: integer
+          description: Number of tags on the dataset
+        version:
+          type: string
+          nullable: true
+        state:
+          type: string
+          description: CKAN state (usually `active`)
+      required:
+        - id
+        - name
+        - title
+        - private
+        - license_title
+        - license_id
+        - metadata_created
+        - metadata_modified
+        - resources
+
+    # Resource object definition based on CKAN resource schema
+    Resource:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        resource_id:
+          type: string
+          description: Alias of the resource (deprecated)
+        name:
+          type: string
+          description: Human‑readable name of the resource
+        description:
+          type: string
+          description: Description of the resource
+        url:
+          type: string
+          format: uri
+          description: URL where the data file can be downloaded or accessed
+        format:
+          type: string
+          description: File format of the resource (e.g. CSV, XLSX)
+        mimetype:
+          type: string
+          nullable: true
+        size:
+          type: integer
+          nullable: true
+          description: Size of the resource in bytes (may be null)
+        created:
+          type: string
+          format: date-time
+          description: When the resource was first created
+        metadata_modified:
+          type: string
+          format: date-time
+          description: When the resource metadata was last modified
+        datastore_active:
+          type: boolean
+          description: True if the resource is loaded in the CKAN DataStore
+        hash:
+          type: string
+          description: Hash of the data file for change detection
+        package_id:
+          type: string
+          format: uuid
+          description: ID of the parent dataset
+      required:
+        - id
+        - name
+        - url
+        - format
+        - created
+        - metadata_modified
+        - datastore_active
+        - package_id
+
+    # Organization definition
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created:
+          type: string
+          format: date-time
+        state:
+          type: string
+        is_organization:
+          type: boolean
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        type:
+          type: string
+        approval_status:
+          type: string
+      required:
+        - id
+        - name
+        - title
+        - created
+        - state
+        - is_organization
+        - type
+        - approval_status
+
+    # Tag definition
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        vocabulary_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+        - id
+        - name
+
+    # Group definition
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created:
+          type: string
+          format: date-time
+        is_group:
+          type: boolean
+        state:
+          type: string
+      required:
+        - id
+        - name
+        - title
+        - created
+        - is_group
+        - state
