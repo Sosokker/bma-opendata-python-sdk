@@ -1,21 +1,17 @@
-# Bangkok Open Data Python SDK
+# ชุดพัฒนา Bangkok Open Data (ภาษา Python)
 
-[ไทย](README.th.md).
+Python SDK สำหรับดึงข้อมูลจาก API ของdata.bangkok.go.th 
 
----
-
-Lightweight wrapper around the Bangkok CKAN Action API with typed models, caching, and friendly error handling.
-
-## Installation
+## การติดตั้ง
 
 ```bash
 pip install bma-opendata
 
-# or install from a local checkout for development
+# หรือหากต้องการติดตั้งจากโค้ดในเครื่องเพื่อพัฒนา
 pip install -e .
 ```
 
-## Usage
+## การใช้งานเบื้องต้น
 
 ```python
 import logging
@@ -30,10 +26,9 @@ with BangkokOpenDataClient() as client:
         logging.info("Dataset %s has %s resources", dataset.title, len(dataset.resources))
 ```
 
-## Examples
+## ตัวอย่างเพิ่มเติม
 
-Additional runnable examples live under [`examples/`](examples/) and cover listing datasets and searching with filters.
-Run them with your preferred tool, e.g.:
+ใน [`examples/`](examples/) 
 
 ```bash
 uv run python -m examples.list_datasets
