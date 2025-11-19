@@ -1,5 +1,7 @@
 # Bangkok Open Data Python SDK
 
+[![CI](https://github.com/Sosokker/bma-opendata-python-sdk/actions/workflows/workflow.yml/badge.svg)](https://github.com/Sosokker/bma-opendata-python-sdk/actions/workflows/workflow.yml)
+
 [ไทย](README.th.md).
 
 ---
